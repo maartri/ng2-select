@@ -1,4 +1,11 @@
-import { Component, Input, Output,EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output,EventEmitter, OnInit, OnChanges, ElementRef,forwardRef, ExistingProvider } from '@angular/core';
+import {NG_VALUE_ACCESSOR, ControlValueAccessor} from '@angular/forms';
+
+const SELECT_VALUE_ACCESSOR: ExistingProvider = { 
+    provide: NG_VALUE_ACCESSOR,
+    useExisting: forwardRef(() => ng2Select),
+    multi: true
+};
 
 @Component({
     selector: 'ng2-select',
@@ -6,7 +13,7 @@ import { Component, Input, Output,EventEmitter, OnInit } from '@angular/core';
     `
         <div class="select-wrap">
             <div class="text-wrap">
-                <input type="text" id="text-inp" (window:click)="onWindowClick($event)" [value]="dropValue" />
+                <input type="text" id="text-inp" (click)="visible = !visible" [value]="dropValue" />
             </div>
             <ul *ngIf="visible" (close)="open" >
                 <li *ngFor="let list of lists" (click)="selectValue(list)">{{list}}</li>
@@ -17,10 +24,9 @@ import { Component, Input, Output,EventEmitter, OnInit } from '@angular/core';
         div.text-wrap{
             width:100%;
             border:1px solid black;
-            max-width:800px;   
         }
         div.select-wrap{
-            width:100%;
+            width:50%%;
             max-width:800px;
             float:left;
         }
@@ -50,11 +56,15 @@ import { Component, Input, Output,EventEmitter, OnInit } from '@angular/core';
             color:#fff;
             cursor:pointer;
         }
-    `]
+    `],
+     providers: [
+        SELECT_VALUE_ACCESSOR
+    ]
 })
 
 export class ng2Select implements OnInit{
-    @Input() data: Array<any>;
+    @Input() datalist: Array<any>;
+    @Input() data : any;
 
     visible: boolean = false;
     lists: Array<any>;
@@ -62,19 +72,27 @@ export class ng2Select implements OnInit{
     dropValue:string = "";
     listArray: Array<string> = ["mark","aris","michael","gel","tian","bits","anna","ailee","ariston","naruto","sasukee","revenge"]
    
+    onChange = (_: any) => {};
+    onTouched = () => {};
+
     ngOnInit()
     {
         this.initializeData();
     }
 
-    constructor()
+    constructor(public elem:ElementRef)
     {
-
+        let doc = document.getElementsByTagName('html')[0];
+        doc.addEventListener('click', (event) => {
+        if (this.visible && event.target && this.elem.nativeElement !== event.target && !this.elem.nativeElement.contains(event.target)) {
+            this.visible = false;
+            }
+        }, false);
     }
 
     initializeData()
     {
-        this.lists = this.data;
+        this.lists = this.datalist;
     }
 
     onWindowClick(event:any)
@@ -90,6 +108,18 @@ export class ng2Select implements OnInit{
         this.dropValue = value;
     }
 
+    writeValue(value:any)
+    {
+        this.dropValue = value;
+    }
+
+    registerOnChange(fn: (_: any) => void) {
+        this.onChange = fn;
+    }
+
+    registerOnTouched(fn: () => void) {
+        this.onTouched = fn;
+    }
 
 
  
